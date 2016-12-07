@@ -532,7 +532,7 @@ last_step_warn_grid(0)
   // note: HEIGHT is not compulsory, since one could use the TAU keyword, see below
   parse("HEIGHT",height0_);
   parse("PACE",stride_);
-  if(stride_<=0 ) error("frequency for hill addition is nonsensical");
+  if(stride_<=0 ) error("frequency for hill addition is nonsensical.");
   string hillsfname="HILLS";
   parse("FILE",hillsfname);
   parse("BIASFACTOR",biasf_);
@@ -677,7 +677,7 @@ last_step_warn_grid(0)
 
   checkRead();
 
-  log.printf("  Gaussian width ");
+  log.printf("  Gaussian width   ");
   if (adaptive_==FlexibleBin::diffusion)log.printf(" (Note: The units of sigma are in timesteps) ");
   if (adaptive_==FlexibleBin::geometry)log.printf(" (Note: The units of sigma are in dist units) ");
   for(unsigned i=0;i<sigma0_.size();++i) log.printf(" %f",sigma0_[i]);
