@@ -1,11 +1,8 @@
-#include "/Users/walfits/Repositories/plumed2/src/bias/Bias.h"
-#include "/Users/walfits/Repositories/plumed2/src/bias/ActionRegister.h"
 
 #include "/Users/walfits/Repositories/plumed2/src/core/ActionAtomistic.h"
-#include "/Users/walfits/Repositories/plumed2/src/core/ActionRegister.h"
-#include "/Users/walfits/Repositories/plumed2/src/core/PlumedMain.h"
-#include "/Users/walfits/Repositories/plumed2/src/core/ActionSet.h"
-#include "/Users/walfits/Repositories/plumed2/src/core/Atoms.h"
+#include "/Users/walfits/Repositories/plumed2/src/core/ActionWithArguments.h"
+#include "/Users/walfits/Repositories/plumed2/src/core/ActionPilot.h"
+
 
 #include "/Users/walfits/Repositories/plumed2/src/tools/AtomNumber.h"
 
@@ -17,29 +14,31 @@
 #include <vector>
 #include <typeinfo>
 #include <algorithm>
+#include <typeinfo>
 
 using namespace std;
 
 
 namespace PLMD{
-namespace bias{
 
 class BXD :
-    public Bias
+    public ActionWithArguments,
+    public ActionAtomistic,
+    public ActionPilot
 {
     private:
       double boxSeparation;
+      int numBoxes;
       vector<double> boxes;
       bool isFirstStep;
-    int currentBox(vector<double> &, const double);
-      int theCurrentBox;
+      void setBoxes(const double);
+      vector<AtomNumber> listAtoms;
     
     public:
       explicit BXD(const ActionOptions&);
       static void registerKeywords(Keywords& keys);
       void calculate();
-//    private:
-//      vector<Atoms> atoms;
+      void apply();
  
 };
     
@@ -53,19 +52,27 @@ PLUMED_REGISTER_ACTION(BXD,"BXD")
     
 void BXD::registerKeywords(Keywords& keys)
 {
-    Bias::registerKeywords(keys);
+    BXD::registerKeywords(keys);
     keys.use("ARG");                // This enables to use collective variables
-    keys.add("compulsory","BOXSEP","3.0","Defines the separation between the boxes");
+    keys.add("atoms","GROUP","Hacky way to obtain the coordinates of the atoms in the system");
+    keys.add("compulsory","BOXSEP","10.0","Defines the separation between the boxes");
+    keys.add("compulsory","NUMBOXES","10","Defines the number of boxes to use");
 }
 
     
 /* This reads the values of the keywords that are specified in the input file (it is the constructor) */
     
 BXD::BXD(const ActionOptions&ao):
-    PLUMED_BIAS_INIT(ao),
+    Action(ao),
+    ActionAtomistic(ao),
+    ActionPilot(ao),
+    ActionWithArguments(ao),
     isFirstStep(true)
 {
+    parseAtomList("GROUP", listAtoms);
     parse("BOXSEP", boxSeparation);
+    parse("NUMBOXES", numBoxes);
+    boxes.resize(numBoxes);
     checkRead();
 }
 
@@ -74,48 +81,37 @@ BXD::BXD(const ActionOptions&ao):
     
 void BXD::calculate()
 {
-    double ene;
-    ene = getArgument(0);       //This is the energy of the system
+    double colVar;
+    colVar = getArgument(0);                    //This puts the value of the first collective variable specified in ARG in colVar
     
-    // Setting up the boxes
+    setBoxes(colVar);
     
-    boxes.resize(10);
+    vector<double> positions;
+    positions.resize(3);
+    positions = getPositions()
     
-    if(isFirstStep)
-    {
-        boxes[0] = 265;
-        
-        for(int i = 1; i < boxes.size(); i++)
-        {
-            boxes[i] = boxes[0] + i*boxSeparation;
-        }
-        
-        isFirstStep = false;
-    }
+    cout << typeid(listAtoms[21]).name() << endl;
     
-    theCurrentBox = currentBox(boxes, ene);
-    cout << theCurrentBox << endl;
+
+
     
 }
     
-
-int BXD::currentBox(vector<double> &boxes, const double ene)
-{
-    int boxNumber = boxes.size();
     
-    for(int i = 0; i < boxes.size(); i++)
+/* This function uses the first value of the collective variable to set an array of barriers that define the boxes. */
+    
+void BXD::setBoxes(const double firstColVar)
+{
+    boxes[0] = firstColVar - 0.5 * boxSeparation;
+    
+    for(int i = 1; i < numBoxes; i++)
     {
-        if(ene < boxes[i])
-        {
-            return i;
-        }
+        boxes[i] = i*boxSeparation;
     }
     
-    return boxNumber;
 }
    
     
     
 // Brackets from the namespaces!
-}
 }
