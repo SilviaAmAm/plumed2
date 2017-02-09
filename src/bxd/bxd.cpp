@@ -26,9 +26,9 @@ class BXD :
     public ActionAtomistic
 {
     private:
-//      double boxSeparation;
-//      int numBoxes;
-//      std::vector<double> boxes;
+      double boxSeparation;
+      int numBoxes;
+      std::vector<double> boxes;
 //      bool isFirstStep;
 //      void setBoxes(const double);
     
@@ -58,9 +58,9 @@ void BXD::registerKeywords(Keywords& keys)
 {
     Bias::registerKeywords(keys);
     ActionAtomistic::registerKeywords(keys);
-//    keys.use("ARG");                // This enables to use collective variables
-//    keys.add("compulsory","BOXSEP","10.0","Defines the separation between the boxes");
-//    keys.add("compulsory","NUMBOXES","10","Defines the number of boxes to use");
+    keys.use("ARG");                // This enables to use collective variables
+    keys.add("compulsory","BOXSEP","10.0","Defines the separation between the boxes");
+    keys.add("compulsory","NUMBOXES","10","Defines the number of boxes to use");
 }
 
     
@@ -72,11 +72,10 @@ BXD::BXD(const ActionOptions& ao):
     ActionAtomistic(ao)
     //isFirstStep(true)
 {
-//    parse("BOXSEP", boxSeparation);
-//    parse("NUMBOXES", numBoxes);
-//    boxes.resize(numBoxes);
+    parse("BOXSEP", boxSeparation);
+    parse("NUMBOXES", numBoxes);
+    boxes.resize(numBoxes);
     checkRead();
-    std::cout << "HELLO from constructor \n";
 }
 
     
@@ -84,25 +83,95 @@ BXD::BXD(const ActionOptions& ao):
     
 void BXD::calculate()
 {
-    std::cout << "HELLO from calculate \n";
-//    double colVar;
-//    colVar = getArgument(0);                    //This puts the value of the first collective variable specified in ARG in colVar
-//    
-//    int natoms;
-//    natoms = plumed.getAtoms().getNatoms();
-//    
-//    std::vector<AtomNumber> index(natoms);
-//    for(int i = 0; i < natoms; i++)
-//    {
-//        index[i].setIndex(i);
-//    }
-//    requestAtoms(index);
-//    
-//    Vector aPosition;
-//    aPosition = getPosition(6);
-//
-//    std::cout << aPosition[0] << std::endl;
-//
+    
+    //This puts the value of the first collective variable specified in ARG in the variable colVar
+    double colVar;
+    colVar = getArgument(0);
+
+    // This obtains the number of atoms in the system
+    int natoms;
+    natoms = plumed.getAtoms().getNatoms();
+
+    // This creates a list of the indexes of the atoms of interests. In BXD that means all the atoms.
+    std::vector<AtomNumber> index(natoms);
+    
+    for(int i = 0; i < natoms; i++)
+    {
+        index[i].setIndex(i);
+    }
+    requestAtoms(index);
+    
+    // This gets the position of seventh atom
+    Vector aPosition;
+    aPosition = getPosition(0);
+    std::cout << aPosition[0] << "\t" << aPosition[1] << "\t" << aPosition[2] << std::endl;
+    
+    //This gets the current time step
+    long int step;
+    long int stepPlusOne;
+    std::vector<double> masses;
+    
+    masses.resize(natoms);
+    for(int i = 0; i < natoms; i++)
+    {
+        masses[i] = 0.0;
+    }
+
+    
+    step = plumed.getStep();
+    stepPlusOne = step + 1;
+    
+    //Trying to change the position
+    std::vector<double> dd_coordinates;
+    dd_coordinates.assign(3*natoms,0.0);
+    
+    plumed.cmd("setStep",&stepPlusOne);
+    
+    std::vector<Vector> pos(natoms);
+    
+    for(int i = 0; i < natoms; i++)
+    {
+        aPosition = getPosition(i);
+        
+        for(int j = 0; j < 3; j++)
+        {
+            pos[i][j] = aPosition[j];
+        }
+    }
+    
+    pos[0][1] = pos[0][1] + 3.0;
+    pos[0][2] = pos[0][2] + 3.0;
+    pos[0][3] = pos[0][3] + 3.0;
+    
+    //    std::cout << pos[0][1] << "\t" << pos[0][2] << "\t" << pos[0][3] << std::endl;
+    
+    plumed.cmd("setPositions",&pos[0][0]);
+    
+    std::vector<double> fake_forces( 3*natoms, 0.0 ), fake_virial(9);
+    plumed.cmd("setForces",&fake_forces[0]);
+    plumed.cmd("setVirial",&fake_virial[0]);
+    
+    aPosition = getPosition(0);
+    
+    std::cout << aPosition[0] << "\t" << aPosition[1] << "\t" << aPosition[2] << std::endl;
+    std::cout << std::endl;
+    
+//    plumed.cmd("setMasses",&masses[0]);
+//    plumed.cmd("setForces",&forces[0]);
+//    plumed->cmd("setEnergy",&engconf);
+//    plumed->cmd("setPositions",&positions[0]);
+//    plumed->cmd("setBox",cell9);
+//    plumed->cmd("setStopFlag",&plumedWantsToStop);
+//    plumed->cmd("calc");
+    
+    
+    
+    
+//    plumed.cmd("setStepLong",&step);
+//    plumed.cmd("setPositions", &dd_coordinates[0]);
+
+    
+
 //    void * posPtr;
 //    posPtr = &aPosition[0];
 //    
