@@ -72,7 +72,8 @@ step = plumed.getStep();
 
 So far, to get the positions I have been using the public functions of ActionAtomistic that enable to work with the private instance of the Atom class within ActionAtomistic. However, ActionAtomistic has no method to modify the positions.
 
-
+How are the forces modified?
+In the bias class, they create an instance of the class 'Value'. This class enables you to keep together all the things related to a particular value, in this case the bias. The bias class sets the value of the energy as the 'value' and the force is the negative of the derivative of the 'value'. 
 
 The pointers to the MD objects are found in the class MDAtomsBase, located in the core/MDAtoms.h file. However, this is an abstract class and it is implemented in the MDAtomsTyped class (in core/MDAtoms.cpp).
 An MDAtomsBase object is created inside the class Atoms, so one can access these pointers.
