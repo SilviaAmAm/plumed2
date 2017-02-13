@@ -3,10 +3,10 @@
 In the function “registerKeywords” add:
 
 ```c++
-ActionWithArguments::registerKeywords(keys);
+Bias::registerKeywords(keys);
 keys.use("ARG");
 ```
-(I think that one has to use the registerKeywords function to register key from one of the classes from which you inherit that implements it. For example the umbrella sampling has Bias::registerKeywords(keys). )
+One has to use the registerKeywords functions from all the classes you inherit from. 
 
 This enables to use the keyword ‘ARG’ in the input file and thus to specify the label of a collective variable of interest. 
 Then, in the “calculate” function one can use the function ‘getArgument’ which returns the value of the collective variable.
@@ -27,9 +27,16 @@ natoms = plumed.getAtoms().getNatoms();
 ```
 One is able to call the main PlumedMain object 'plumed' because it is a public member in the class Action.
 
+Another way of doing it is to use the fact that the class ActionAtomistic has an object Atom and has a member function that enables to acces the total number of atoms.
+
+```c++
+int natoms;
+natoms = natoms2 = getTotAtoms();
+```
+
 ### How to obtain the positions in the BXD file
 
-Then if one wanted to get the positions of all the atoms in the system, first one needs to create an array with the indices of all the atoms.
+Then if one wanted to get the positions of all the atoms in the system, first one needs to create an array with the indices of all the atoms. These are functions that can be used because they are inherited from ActionAtomistic.
 
 ```c++
 std::vector<AtomNumber> index(natoms);
@@ -40,12 +47,13 @@ for(int i = 0; i < natoms; i++)
 requestAtoms(index);
 ```
 
-The function 'requestAtoms' doesn't return anything, I think it just makes the atoms requested available. The coordinates can then be obtained with the function 'getPosition' which returns a 'Vector', an alias for size 3 vectors in plumed. Here it is shown how to obtain the coordinates for atom 1.
+The function 'requestAtoms' doesn't return anything, I think it just makes the atoms requested available. The coordinates can then be obtained with the function 'getPosition' which returns a 'const Vector' or with 'modifyPositions' which returns a 'Vector'. Vector is an alias for size 3 vectors in plumed. Here it is shown how to obtain the coordinates for atom 1.
 
 ```c++
 Vector aPosition;   
-aPosition = getPosition(0);
+aPosition = modifyPosition(index[0]);
 ```
+
 ### How to obtain the step number
 
 One can obtain the number of time steps performed as follows:
@@ -62,11 +70,9 @@ step = plumed.getStep();
 
 ### How to change the positions from the BXD file
 
-It seems that the command to set the new positions is found in the PlumedMain.cpp file. PlumedMain is the main plumed object. It defines the interface with the MD code. It is wrapped around by PLMD::Plumed. 
+So far, to get the positions I have been using the public functions of ActionAtomistic that enable to work with the private instance of the Atom class within ActionAtomistic. However, ActionAtomistic has no method to modify the positions.
 
-The commands that can be passed to the main plumed object are stored in /src/core/PlumedMainMap.inc.
 
-However, it looks that the positions are not being modified when the setPosition command is called... :(
 
 The pointers to the MD objects are found in the class MDAtomsBase, located in the core/MDAtoms.h file. However, this is an abstract class and it is implemented in the MDAtomsTyped class (in core/MDAtoms.cpp).
 An MDAtomsBase object is created inside the class Atoms, so one can access these pointers.
