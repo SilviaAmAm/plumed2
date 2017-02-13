@@ -31,7 +31,7 @@ Another way of doing it is to use the fact that the class ActionAtomistic has an
 
 ```c++
 int natoms;
-natoms = natoms2 = getTotAtoms();
+natoms = getTotAtoms();
 ```
 
 ### How to obtain the positions in the BXD file
