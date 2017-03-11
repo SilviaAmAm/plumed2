@@ -1,5 +1,5 @@
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Copyright (c) 2012-2016 The plumed team
+   Copyright (c) 2012-2017 The plumed team
    (see the PEOPLE file at the root of the distribution for a list of names)
 
    See http://www.plumed.org for more information.
@@ -171,8 +171,7 @@ static vector<molfile_plugin_t *> plugins;
 static map <string, unsigned> pluginmap;
 static int register_cb(void *v, vmdplugin_t *p){
   //const char *key = p->name;
-  std::pair<std::map<string,unsigned>::iterator,bool> ret; 
-  ret = pluginmap.insert ( std::pair<string,unsigned>(string(p->name),plugins.size()) );
+  const auto ret = pluginmap.insert ( std::pair<string,unsigned>(string(p->name),plugins.size()) );
   if (ret.second==false) { 
 	//cerr<<"MOLFILE: found duplicate plugin for "<<key<<" : not inserted "<<endl; 
   }else{
