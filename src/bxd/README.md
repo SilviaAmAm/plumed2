@@ -62,99 +62,21 @@ One can obtain the number of time steps performed as follows:
 long int step;
 step = plumed.getStep();
 ```
+## Common problems
 
-### How to obtain the velocities from the BXD file
+### Complains about labels not recognised
 
+```
+message: ERROR in input to action BXD with label @1 : cannot understand the following words from the input line : LABEL=bxd, 
+Abort trap: 6
+```
+Make sure that you have registered the keywords from Action:
 
-
-
-### How to change the positions from the BXD file
-
-So far, to get the positions I have been using the public functions of ActionAtomistic that enable to work with the private instance of the Atom class within ActionAtomistic. However, ActionAtomistic has no method to modify the positions.
-
-### How to modify the forces 
-
-The current function of BXD manages to modify the forces
-
-```c++
-void BXD::apply()
+```
+void BXD::registerKeywords(Keywords& keys)
 {
-    
-    
-    const unsigned numOfComp = getNumberOfComponents();
-    const unsigned numOfArg = getNumberOfArguments();
-    bool at_least_one_forced = false;
-    std::vector<double> bxdForces(numOfArg,0.0);
-    
-    for(unsigned i = 0; i < numOfArg; ++i)
-    {
-        bxdForces[i] = 2;
-    }
-    
-    
-    std::vector<double> f(numOfArg, 0.0);
-    std::vector<double> forces(numOfArg);
-    
-    if(onStep())
-    {
-        double gstr = static_cast<double>(getStride());
-        for(unsigned i = 0; i < numOfArg; ++i)
-        {
-            getPntrToArgument(i)->addForce(gstr*bxdForces[i]);
-        }
-    }
-
-    at_least_one_forced = true;
-    
-    for(unsigned i = 0; i < numOfComp; ++i)
-    {
-        getPntrToComponent(i)->applyForce(forces);
-        for(unsigned j = 0; j < numOfArg; j++)
-        {
-            f[j] += forces[j];
-            std::cout << forces[j] << "\t";
-        }
-
-    }
-    
-    if(at_least_one_forced)
-    {
-        for(unsigned i = 0; i < numOfArg; ++i)
-        {
-            getPntrToArgument(i)->addForce(f[i]);
-        }
-    }    
+    Action::registerKeywords( keys );       // <----- This!
+    ActionAtomistic::registerKeywords(keys);
 }
 ```
-What needs to be understood:
- 1. The bxdForces vector in this function is the equivalent of the bias vector 'outputForces'. Why does this vector has only a scalar value for the force on each collective variable rather than a vector? 
- 
- The force seems to be the modulus of the force vector (from the restraint module). It is the force on the collective variable.
- 
- 2. How are these new bxdForces passed to the MD code?
- 
-
- 
-In the bias class, they create an instance of the class 'Value'. This class enables you to keep together all the things related to a particular value, in this case the bias. The bias class sets the value of the energy as the 'value' and the force is the negative of the derivative of the 'value'. Every bias class has this. In 'ActionWithArguments' there is a public:
-
-```c++
-Value * getPntrToArgument
-```
-
-This points to the argument that was specified in the input file, so in the case of bias it is a collective variable. Then, in the Bias::apply() function, a force is added to the collective variable.
-
-In PlumedMain.cpp there is a command "cmd_getBias" which converts the bias into MD units. It uses the function "getbias()" that is also in PlumedMain.cpp (bias is just a value in the class PlumedMain):
-
-```c++
-double PlumedMain::getBias() const{
-  return bias;
-}
-```
-Although, here they begin by defining bias as 0.0. I don't know where the actual bias value comes in.
-
-
-The pointers to the MD objects are found in the class MDAtomsBase, located in the core/MDAtoms.h file. However, this is an abstract class and it is implemented in the MDAtomsTyped class (in core/MDAtoms.cpp).
-An MDAtomsBase object is created inside the class Atoms, so one can access these pointers.
-
-### How to change the velocities from the BXD file
 
