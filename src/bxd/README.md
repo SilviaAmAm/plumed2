@@ -93,5 +93,22 @@ PRINT ARG=d FILE=COLVAR
 ```
 Then the distance is calculated because the action PRINT needs it as an input.
 
-If you want to create an action whose output doesnt need to be input into something else, you need to make this new action inherit from the ActionPilot class. This class drives the execution of other Action's at a fixed stride which is specified with the command STRIDE= keyword.
+If you want to create an action whose output doesnt need to be input into something else, you need to make this new action inherit from the ActionPilot class. This class drives the execution of other Action's at a fixed stride which is specified with the command STRIDE= keyword. And remember to set the stride, because the default value is 0, so your action is actually never run.
+
+```
+void BXD::registerKeywords(Keywords& keys)
+{
+
+    Action::registerKeywords( keys );
+    ActionAtomistic::registerKeywords(keys);
+    ActionPilot::registerKeywords(keys);
+    keys.add("hidden","STRIDE","The stride for ActionPilot");  // -----> Need to add this!
+}
+```
+
+Then, in the input file:
+
+```
+BXD STRIDE=1 LABEL=bxd
+```
 
