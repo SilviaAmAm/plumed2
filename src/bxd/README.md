@@ -80,3 +80,18 @@ void BXD::registerKeywords(Keywords& keys)
 }
 ```
 
+### The function 'calculate' isn't called
+
+All the actions in plumed are run only when another action needs its output as an input. For example, if you have in the plumed input file:
+```
+d: DISTANCE ATOMS=1,2
+```
+Then, the distance is not actually calculated. However, if you have:
+```
+d: DISTANCE ATOMS=1,2
+PRINT ARG=d FILE=COLVAR
+```
+Then the distance is calculated because the action PRINT needs it as an input.
+
+If you want to create an action whose output doesnt need to be input into something else, you need to make this new action inherit from the ActionPilot class. This class drives the execution of other Action's at a fixed stride which is specified with the command STRIDE= keyword.
+
