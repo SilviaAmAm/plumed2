@@ -113,6 +113,6 @@ BXD STRIDE=1 LABEL=bxd
 ```
 ### When inheriting from both ActionAtomistic and ActionWithArgument, the dependencies are cleared
 
-The action BXD inherits from both ActionAtomistic and ActionWithArgument. It contains a vector of pointers to Action objects that point to other actions on which BXD depends (the collective variable). When requestAtoms() from ActionAtomistic is called, this clears all the dependencies. So, to maintain the dependencies, copy them before calling requestAtoms() and re-assign them after.
+The action BXD inherits from both ActionAtomistic and ActionWithArgument. It contains a vector of pointers to Action objects that point to other actions on which BXD depends (the collective variable). This vector is typef as "Dependency" (and it is called "after"). When requestAtoms() from ActionAtomistic is called, this clears the dependency vector. So, to maintain the dependencies, copy them before calling requestAtoms() and re-assign them after.
 
 
